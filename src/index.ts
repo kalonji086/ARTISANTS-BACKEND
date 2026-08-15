@@ -6,6 +6,7 @@ import * as dotenv from 'dotenv';
 
 import artisanRoutes from './api/artisan.routes';
 import quoteRoutes from './api/quote.routes';
+import webhookRoutes from './api/webhook.routes';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use(express.json());
 // Routes
 app.use('/api/artisans', artisanRoutes);
 app.use('/api/quotes', quoteRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Bienvenue sur l\'API ARTISANTS 🚀', status: 'OK' });
