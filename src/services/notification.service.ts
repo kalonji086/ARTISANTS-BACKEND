@@ -2,7 +2,7 @@ import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 
 const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN });
 
-export const sendPushNotification = async (expoPushToken: string, title: string, body: string, data?: object) => {
+export const sendPushNotification = async (expoPushToken: string, title: string, body: string, data?: any) => {
   if (!Expo.isExpoPushToken(expoPushToken)) {
     console.error(`Token Expo invalide: ${expoPushToken}`);
     return;
