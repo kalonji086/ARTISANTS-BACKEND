@@ -8,8 +8,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 18.0.0
-      - key: SUPABASE_URL
+      - key: DATABASE_URL
         sync: false
+      - key: SUPABASE_URL
+        value: https://zfhejynzmhhzzzmadgli.supabase.co
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: EXPO_ACCESS_TOKEN
