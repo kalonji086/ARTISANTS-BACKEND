@@ -21,15 +21,21 @@ export const createQuoteRequest = async (req: Request, res: Response) => {
 
     if (error) throw error;
 
-    // Récupérer le token push de l'artisan (à stocker dans profiles)
+    // Récupérer le token push de l'artisan
     const { data: artisan } = await supabase
       .from('profiles')
-      .select('full_name, avatar_url') // Imaginez qu'il y a un champ expo_push_token
+      .select('full_name, expo_push_token')
       .eq('id', artisan_id)
       .single();
 
-    // Simulation d'envoi de notification (si le token existait)
-    console.log(`Notification envoyée à l'artisan ${artisan_id} pour un nouveau devis.`);
+    if (artisan?.expo_push_token) {
+      await sendPushNotification(
+        artisan.expo_push_token,
+        'Nouveau devis !',
+        `Vous avez reçu une nouvelle demande de devis de la part d'un client.`,
+        { quoteId: quote.id }
+      );
+    }
 
     res.status(201).json(quote);
   } catch (err: any) {
@@ -52,7 +58,20 @@ export const updateQuoteStatus = async (req: Request, res: Response) => {
     if (error) throw error;
 
     // Notifier le client du changement de statut
-    console.log(`Notification envoyée au client pour le devis ${id}: ${status}`);
+    const { data: client } = await supabase
+      .from('profiles')
+      .select('expo_push_token')
+      .eq('id', data.client_id)
+      .single();
+
+    if (client?.expo_push_token) {
+      await sendPushNotification(
+        client.expo_push_token,
+        'Mise à jour de votre devis',
+        `Votre demande de devis est maintenant : ${status}${price ? ` (Prix: ${price}€)` : ''}`,
+        { quoteId: id }
+      );
+    }
 
     res.json(data);
   } catch (err: any) {

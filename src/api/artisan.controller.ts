@@ -5,6 +5,18 @@ export const getArtisans = async (req: Request, res: Response) => {
   try {
     const { lat, lng, radius, category } = req.query;
 
+    if (lat && lng) {
+      const { data, error } = await supabase.rpc('get_nearby_artisans', {
+        lat: parseFloat(lat as string),
+        lng: parseFloat(lng as string),
+        radius_meters: parseInt(radius as string) || 50000, // 50km par défaut
+        category_name: category || null
+      });
+
+      if (error) throw error;
+      return res.json(data);
+    }
+
     let query = supabase
       .from('profiles')
       .select('*, portfolio_items(*)')
@@ -12,8 +24,8 @@ export const getArtisans = async (req: Request, res: Response) => {
       .eq('is_available', true);
 
     if (category) {
-      // Logique simplifiée pour l'exemple, nécessite une jointure ou filtrage sur artisan_services
-      console.log('Filtrage par catégorie:', category);
+      // Pour une recherche simple sans lat/lng, on peut filtrer par catégorie via une jointure si nécessaire
+      // Ici on suppose que profiles a une vue ou une relation simplifiée
     }
 
     const { data, error } = await query;
