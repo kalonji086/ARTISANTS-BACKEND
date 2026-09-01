@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { supabase } from '../lib/supabase';
 
+type AuthenticatedRequest = Request & { user?: { id: string } };
+
 export const getArtisans = async (req: Request, res: Response) => {
   try {
     const { lat, lng, radius, category } = req.query;
@@ -9,7 +11,7 @@ export const getArtisans = async (req: Request, res: Response) => {
       const { data, error } = await supabase.rpc('get_nearby_artisans', {
         lat: parseFloat(lat as string),
         lng: parseFloat(lng as string),
-        radius_meters: parseInt(radius as string) || 50000, // 50km par défaut
+        radius_meters: parseInt(radius as string) || 50000,
         category_name: category || null
       });
 
@@ -24,8 +26,7 @@ export const getArtisans = async (req: Request, res: Response) => {
       .eq('is_available', true);
 
     if (category) {
-      // Pour une recherche simple sans lat/lng, on peut filtrer par catégorie via une jointure si nécessaire
-      // Ici on suppose que profiles a une vue ou une relation simplifiée
+      // À compléter selon la structure réelle de données
     }
 
     const { data, error } = await query;
@@ -33,14 +34,19 @@ export const getArtisans = async (req: Request, res: Response) => {
     if (error) throw error;
 
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue lors de la récupération des artisans';
+    res.status(500).json({ error: message });
   }
 };
 
 export const updateArtisanProfile = async (req: Request, res: Response) => {
-  const user = (req as any).user;
+  const user = (req as AuthenticatedRequest).user;
   const updates = req.body;
+
+  if (!user?.id) {
+    return res.status(401).json({ error: 'Utilisateur non authentifié' });
+  }
 
   try {
     const { data, error } = await supabase
@@ -51,7 +57,8 @@ export const updateArtisanProfile = async (req: Request, res: Response) => {
 
     if (error) throw error;
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue lors de la mise à jour du profil';
+    res.status(500).json({ error: message });
   }
 };

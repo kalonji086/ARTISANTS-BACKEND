@@ -2,9 +2,19 @@ import { Request, Response } from 'express';
 import { supabase } from '../lib/supabase';
 import { sendPushNotification } from '../services/notification.service';
 
+type AuthenticatedRequest = Request & { user?: { id: string } };
+
 export const createQuoteRequest = async (req: Request, res: Response) => {
-  const user = (req as any).user;
+  const user = (req as AuthenticatedRequest).user;
   const { artisan_id, service_id, description } = req.body;
+
+  if (!user?.id) {
+    return res.status(401).json({ error: 'Utilisateur non authentifié' });
+  }
+
+  if (!artisan_id || !service_id || !String(description || '').trim()) {
+    return res.status(400).json({ error: 'artisan_id, service_id et description sont requis' });
+  }
 
   try {
     const { data: quote, error } = await supabase
@@ -13,7 +23,7 @@ export const createQuoteRequest = async (req: Request, res: Response) => {
         client_id: user.id,
         artisan_id,
         service_id,
-        description,
+        description: String(description).trim(),
         status: 'pending'
       })
       .select()
@@ -38,14 +48,19 @@ export const createQuoteRequest = async (req: Request, res: Response) => {
     }
 
     res.status(201).json(quote);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue lors de la création du devis';
+    res.status(500).json({ error: message });
   }
 };
 
 export const updateQuoteStatus = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status, price } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ error: 'status requis' });
+  }
 
   try {
     const { data, error } = await supabase
@@ -74,7 +89,8 @@ export const updateQuoteStatus = async (req: Request, res: Response) => {
     }
 
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue lors de la mise à jour du devis';
+    res.status(500).json({ error: message });
   }
 };
