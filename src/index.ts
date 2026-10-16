@@ -121,7 +121,7 @@ app.use(errorHandler);
 // ============================================
 // 7. Lancement du serveur avec arrêt graceful
 // ============================================
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Serveur démarré sur http://localhost:${PORT}${API_VERSION}`);
 });
 
