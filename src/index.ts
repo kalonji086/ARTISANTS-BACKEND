@@ -71,7 +71,7 @@ app.use(correlationIdMiddleware);
 // ============================================
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // 20 requêtes par fenêtre
+  max: 500, // 500 requêtes par fenêtre (authentification + listes publiques mobile)
   message: { error: 'Trop de tentatives, veuillez réessayer plus tard' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -79,7 +79,7 @@ const authLimiter = rateLimit({
 
 const quoteLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // 50 requêtes par fenêtre
+  max: 500, // 500 requêtes par fenêtre
   message: { error: 'Trop de demandes de devis, veuillez réessayer plus tard' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -87,9 +87,16 @@ const quoteLimiter = rateLimit({
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requêtes par fenêtre
+  max: 1000, // 1000 requêtes par fenêtre (compatible IP partagées Render/proxy + dev mobile)
   standardHeaders: true,
   legacyHeaders: false,
+  // Exclure le health check du comptage (surveillance Render)
+  skip: (req) => req.path === `${API_VERSION}/health`,
+});
+
+// Health check exclu du rate limiting (surveillance Render)
+app.get(`${API_VERSION}/health`, (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '1.0.0' });
 });
 
 app.use(generalLimiter);
@@ -100,11 +107,6 @@ app.use(generalLimiter);
 app.use(`${API_VERSION}/artisans`, authLimiter, artisanRoutes);
 app.use(`${API_VERSION}/quotes`, quoteLimiter, quoteRoutes);
 app.use(`${API_VERSION}/webhooks`, webhookRoutes);
-
-// Health check endpoint
-app.get(`${API_VERSION}/health`, (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '1.0.0' });
-});
 
 app.get('/', (_req, res) => {
   res.json({ message: 'Bienvenue sur l\'API ARTISANTS 🚀', status: 'OK', apiVersion: API_VERSION });
