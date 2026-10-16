@@ -21,13 +21,17 @@ dotenv.config();
 const requiredEnvVars = [
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'SUPABASE_WEBHOOK_SECRET',
 ];
 
 const missingEnvVars = requiredEnvVars.filter((v) => !process.env[v]);
 if (missingEnvVars.length > 0) {
   logger.error(`Variables d'environnement manquantes : ${missingEnvVars.join(', ')}`);
   process.exit(1);
+}
+
+// SUPABASE_WEBHOOK_SECRET est optionnel : si absent, le webhook n'est pas protégé
+if (!process.env.SUPABASE_WEBHOOK_SECRET) {
+  logger.warn('Attention: SUPABASE_WEBHOOK_SECRET non defini - le webhook Supabase ne sera pas protege');
 }
 
 const corsOrigins = (process.env.CORS_ORIGINS || '')

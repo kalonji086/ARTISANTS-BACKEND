@@ -1,0 +1,6 @@
+feat: securisation backend et ameliorations API
+
+- rate limiting, CORS restreint, webhook secret
+- validation env au demarrage, health check, graceful shutdown
+- Swagger docs, Zod validation, RLS, triggers updated_at
+- error handler, correlation ID, CI/CD
