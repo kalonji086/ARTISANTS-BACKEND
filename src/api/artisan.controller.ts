@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { supabase } from '../lib/supabase';
+import { updateArtisanProfileSchema } from '../lib/validation';
 
 type AuthenticatedRequest = Request & { user?: { id: string } };
 
@@ -42,11 +43,24 @@ export const getArtisans = async (req: Request, res: Response) => {
 
 export const updateArtisanProfile = async (req: Request, res: Response) => {
   const user = (req as AuthenticatedRequest).user;
-  const updates = req.body;
 
   if (!user?.id) {
     return res.status(401).json({ error: 'Utilisateur non authentifié' });
   }
+
+  // Validation Zod du corps de requête
+  const validationResult = updateArtisanProfileSchema.safeParse(req);
+  if (!validationResult.success) {
+    return res.status(400).json({
+      error: 'Données de requête invalides',
+      details: validationResult.error.errors.map((e) => ({
+        field: e.path.join('.'),
+        message: e.message,
+      })),
+    });
+  }
+
+  const updates = validationResult.data.body;
 
   try {
     const { data, error } = await supabase
